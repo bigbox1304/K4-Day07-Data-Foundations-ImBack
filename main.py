@@ -17,9 +17,9 @@ from src.embeddings import (
     _mock_embed,
 )
 
-# Thư mục dữ liệu mặc định cho demo = bộ khởi động cố định của lớp K4.
+# Thư mục dữ liệu mặc định cho demo = bộ tài liệu chính thức đã chuẩn bị.
 # Đổi bằng biến môi trường: LAB_DATA_DIR=data/<thu-muc-cua-nhom> python3 main.py
-DEFAULT_DATA_DIR = "data/k4_ecommerce"
+DEFAULT_DATA_DIR = "data/k4_official"
 
 
 def _select_embedder():
