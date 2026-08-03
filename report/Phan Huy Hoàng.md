@@ -1,10 +1,10 @@
 # Báo Cáo Cá Nhân — Lab 7: Embedding & Vector Store
 
-**Họ tên:** [Phan Huy Hoàng]
-**Nhóm:** [I-M BACK]
+**Họ tên:** Phan Huy Hoàng
+**Nhóm:** I-M BACK
 **Ngày:** 03/08/2026
 
-> **Trạng thái:** Phần lập trình cá nhân đã hoàn thành và vượt qua 42/42 bài test. Các số liệu ở Phần 4–5 là kết quả chạy thử có kiểm soát trên dữ liệu khởi động và mock embedder; cần chạy lại bằng local embedder trên bộ 5–10 tài liệu cùng 5 câu hỏi chính thức của nhóm trước khi nộp.
+> **Trạng thái:** Phần lập trình và đánh giá cá nhân đã hoàn thành: 42/42 bài test, 5 cặp similarity bằng local multilingual embedder và 5/5 truy vấn có đúng bằng chứng trong top-3 trên corpus 9 tài liệu chính thức. Phần so sánh với thành viên/nhóm khác không thuộc phạm vi cập nhật của báo cáo này.
 
 ---
 
@@ -85,64 +85,79 @@ Agent truy xuất `top_k` chunk rồi đánh số từng nguồn trong phần `N
 ### Kết Quả Kiểm Thử
 
 ```text
-platform win32 -- Python 3.13.3, pytest-9.1.1
+platform win32 -- Python 3.11.15, pytest-9.1.1
 collected 42 items
 tests/test_solution.py .......................................... [100%]
-============================= 42 passed in 0.12s =============================
+============================= 42 passed in 0.10s =============================
 ```
 
 **Số lượng bài test vượt qua:** 42 / 42.
 
-**Lưu ý môi trường:** Lab quy định Python 3.11 nhưng máy kiểm thử hiện chỉ tìm thấy Python 3.13.3. Cần chạy xác nhận lại trên Python 3.11 trước khi nộp chính thức; lần chạy hiện tại không có lỗi.
+**Lưu ý môi trường:** Đã xác nhận trực tiếp bằng Python 3.11.15 theo đúng phiên bản lab yêu cầu; toàn bộ 42 bài test đều vượt qua.
 
 ---
 
 ## 4. Dự đoán độ tương tự (Similarity Predictions) — Cá nhân (5 điểm)
 
-Tôi dự đoán trước theo ý nghĩa của câu. Do máy chưa có `sentence-transformers`, cột “Điểm thực tế” dưới đây dùng `_mock_embed` 64 chiều của lab và ngưỡng minh họa `0,20`; mock chỉ kiểm tra luồng tính toán, không đo ngữ nghĩa.
+Tôi dự đoán trước theo ý nghĩa của câu, sau đó tính điểm bằng `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (384 chiều, vector đã chuẩn hóa) và hàm `compute_similarity()` đã triển khai.
 
-| Cặp | Câu A | Câu B | Dự đoán | Điểm mock thực tế | Đúng theo ngưỡng tạm? |
-|------|-------|-------|---------|-------------------|----------------------|
-| 1 | Người mua cần gửi yêu cầu đổi trả khi hàng bị lỗi. | Khách hàng yêu cầu trả lại sản phẩm bị lỗi. | Cao | 0,095772 | Không |
-| 2 | Người bán phải cung cấp mô tả sản phẩm chính xác. | Thông tin giá và tình trạng hàng phải đúng. | Cao | -0,030965 | Không |
-| 3 | Sản phẩm bị cấm không được đăng bán. | Người bán có thể đăng mọi loại hàng hóa. | Cao về chủ đề, đối lập về lập trường | 0,201121 | Đúng về độ gần chủ đề |
-| 4 | Người mua gửi bằng chứng khi hàng không đúng mô tả. | Trời hôm nay có nhiều mây và có thể mưa. | Thấp | -0,067187 | Đúng |
-| 5 | Người bán phản hồi yêu cầu đổi trả theo quy trình. | Người bán chịu trách nhiệm xử lý yêu cầu hoàn hàng. | Cao | 0,040765 | Không |
+| Cặp | Câu A | Câu B | Dự đoán trước khi chạy | Điểm local thực tế | Đánh giá dự đoán |
+|------|-------|-------|------------------------|--------------------|------------------|
+| 1 | Người mua cần gửi yêu cầu đổi trả khi hàng bị lỗi. | Khách hàng yêu cầu trả lại sản phẩm bị lỗi. | Cao | 0,784442 | Đúng |
+| 2 | Người bán phải cung cấp mô tả sản phẩm chính xác. | Thông tin giá và tình trạng hàng phải đúng. | Cao | 0,599158 | Đúng |
+| 3 | Sản phẩm bị cấm không được đăng bán. | Người bán có thể đăng mọi loại hàng hóa. | Cao về chủ đề nhưng đối lập lập trường | 0,208477 | Không cao như dự đoán |
+| 4 | Người mua gửi bằng chứng khi hàng không đúng mô tả. | Trời hôm nay có nhiều mây và có thể mưa. | Thấp | -0,042767 | Đúng |
+| 5 | Người bán phản hồi yêu cầu đổi trả theo quy trình. | Người bán chịu trách nhiệm xử lý yêu cầu hoàn hàng. | Cao | 0,713358 | Đúng |
 
 **Kết quả bất ngờ nhất và phản ngẫm:**
 
-Cặp 5 gần nghĩa nhưng điểm mock chỉ 0,040765, trong khi cặp 3 chứa hai phát biểu đối lập lại cao nhất. Điều này không phản ánh embedding ngữ nghĩa mà cho thấy mock vector gần ngẫu nhiên theo toàn chuỗi; vì thế không được dùng kết quả này để kết luận chất lượng chunking hoặc khả năng hiểu tiếng Việt. Một embedder thật cũng có thể cho cặp 3 điểm cao vì similarity đo độ gần chủ đề, không tự động kiểm tra quan hệ đúng/sai hay phủ định.
+Cặp 3 bất ngờ nhất: hai câu dùng cùng chủ đề “đăng bán sản phẩm” nhưng khác nhau bởi phủ định và lập trường, nên điểm chỉ 0,208477. Kết quả cho thấy embedding đa ngữ đã nhận ra phần liên quan về chủ đề nhưng khoảng cách vẫn lớn do ý nghĩa đối lập; cosine similarity đo độ gần biểu diễn, không phải bộ kiểm tra tính đúng/sai hay quan hệ suy luận.
 
 ---
 
 ## 5. Kết quả truy xuất của tôi (Competition Results) — Cá nhân (10 điểm)
 
-### Kết quả chạy thử — chưa phải benchmark chính thức của nhóm
+### Thiết lập đánh giá cá nhân
 
-Thiết lập tạm: 2 tài liệu mẫu trong `data/k4_ecommerce`, `SentenceChunker(max_sentences_per_chunk=2)`, `_mock_embed`, `top_k=3`; câu 5 lọc `metadata_filter={"customer_role": "seller"}`. Bộ dữ liệu tự ghi rõ chỉ là template `example.com`, chưa đủ yêu cầu 5–10 nguồn công khai, còn `REPORT_NHOM.md` chưa có 5 câu hỏi thống nhất.
+- Corpus: 9 tài liệu chính thức trong `data/k4_official`.
+- Backend: `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`, chạy cục bộ.
+- Chunking cá nhân: `RecursiveChunker(chunk_size=700)`.
+- Tổng số chunk: 535; truy xuất `top_k=3`.
+- Tiêu chí relevant: kết quả phải chứa đúng `doc_id` và đủ cụm bằng chứng định trước, không chỉ cùng chủ đề.
+- Câu 2 lọc trước bằng `metadata_filter={"customer_role": "seller"}`.
+- `KnowledgeBaseAgent` dùng `llm_fn` extractive xác định: chỉ sinh câu trả lời khi cụm bằng chứng có trong context; đây không phải mô hình chat sinh văn bản.
 
-| # | Câu hỏi ứng viên | Top-1 chunk truy xuất được (tóm tắt) | Score | Top-3 có chunk trả lời đúng? | Câu trả lời trích xuất từ Top-1 (tóm tắt) |
-|---|------------------|--------------------------------------|-------|----------------------------|------------------------------------------|
-| 1 | Người mua cần làm gì khi hàng bị lỗi hoặc không đúng mô tả? | Người bán phản hồi yêu cầu đổi trả theo quy trình | 0,162018 | Không | Chỉ nêu trách nhiệm phản hồi của người bán, thiếu yêu cầu/bằng chứng của người mua |
-| 2 | Ai chịu trách nhiệm cung cấp giá, mô tả và tình trạng hàng chính xác? | Sản phẩm hạn chế hoặc cấm không được đăng bán | 0,201998 | Không | Không trả lời đúng chủ thể chịu trách nhiệm |
-| 3 | Sản phẩm bị hạn chế hoặc bị cấm có được đăng bán không? | Hàng hạn chế/cấm không được đăng bán | 0,037669 | Có, ở Top-1 | Không được đăng bán |
-| 4 | Người bán phải làm gì khi nhận yêu cầu đổi trả? | Người bán phản hồi theo quy trình của sàn | 0,127936 | Có, ở Top-1 | Phản hồi theo quy trình của sàn |
-| 5 | Quy định đăng sản phẩm nào áp dụng cho người bán? | Hàng hạn chế/cấm không được đăng bán | 0,241965 | Có, ở Top-1 | Không đăng sản phẩm bị hạn chế hoặc bị cấm |
+### 5 câu hỏi đánh giá cá nhân và gold answers
 
-**Bao nhiêu câu hỏi trả về chunk có liên quan trong top-3?** 3 / 5 trong lần chạy mock tạm thời.
+| # | Câu hỏi đánh giá | Gold answer | Chunk chứa bằng chứng |
+|---|------------------|-------------|-----------------------|
+| 1 | Sau khi đơn hàng Shopee được giao thành công, người mua có bao lâu để yêu cầu trả hàng hoặc hoàn tiền, kể cả với thực phẩm tươi sống và đông lạnh? | Thông thường là 15 ngày; riêng thực phẩm tươi sống và đông lạnh là 24 giờ kể từ khi giao thành công. | `shopee-return-refund-policy`, chunk 6 |
+| 2 | Người bán Shopee có được đăng mỹ phẩm đã qua sử dụng hoặc mỹ phẩm handmade chưa có giấy công bố và chứng từ an toàn không? | Không; đây là nhóm sản phẩm bị cấm/hạn chế đăng bán. | `shopee-prohibited-restricted-products`, chunk 12; lọc `seller` |
+| 3 | Tiki có trực tiếp lưu trữ thông tin thẻ thanh toán của khách hàng không, và bên nào chịu trách nhiệm lưu trữ bảo mật? | Tiki chỉ giữ token đã mã hóa, không trực tiếp lưu thông tin thẻ; Đối Tác Cổng Thanh Toán được cấp phép lưu trữ và bảo mật. | `tiki-payment-security-policy`, chunk 2 |
+| 4 | Khi nhận hàng Tiki, khách hàng được kiểm tra đến mức nào và có được mở seal hoặc sử dụng thử sản phẩm không? | Được mở thùng để kiểm tra nhưng không được mở seal riêng hoặc kiểm tra sâu như cắm điện, sử dụng thử, ghi dữ liệu. | `tiki-inspection-on-delivery-policy`, chunk 0 |
+| 5 | Tiki lưu trữ thông tin cá nhân của khách hàng trong bao lâu? | Đến khi khách hàng yêu cầu hoặc tự thực hiện hủy bỏ; dữ liệu luôn được bảo mật trên máy chủ Tiki. | `tiki-personal-data-protection-policy`, chunk 9 |
+
+> Đây là bộ câu hỏi và kết quả thuộc phần đánh giá cá nhân. Báo cáo này không thực hiện so sánh với chiến lược hay kết quả của thành viên khác.
+
+### Kết quả chạy thực tế
+
+| # | Top-1 chunk truy xuất được (tóm tắt) | Score top-1 | Vị trí chunk đúng | Relevant trong top-3? | Câu trả lời của Agent (tóm tắt) |
+|---|--------------------------------------|-------------|--------------------|-------------------------|---------------------------------|
+| 1 | Quy định 15 ngày và ngoại lệ thực phẩm tươi sống/đông lạnh 24 giờ | 0,811260 | Rank 1 | Có | Thông thường 15 ngày; thực phẩm tươi sống và đông lạnh 24 giờ |
+| 2 | Mở đầu danh sách sản phẩm cấm/hạn chế | 0,680549 | Rank 3 | Có | Không được đăng mỹ phẩm đã dùng hoặc handmade thiếu giấy tờ an toàn |
+| 3 | Tiki chỉ giữ token mã hóa, đối tác cổng thanh toán giữ thông tin thẻ | 0,811719 | Rank 1 | Có | Tiki không trực tiếp giữ thông tin thẻ; đối tác cổng thanh toán bảo mật |
+| 4 | Hướng dẫn ký biên bản đồng kiểm | 0,740177 | Rank 2 | Có | Được mở thùng nhưng không mở seal, cắm điện hay sử dụng thử |
+| 5 | Phần giới thiệu chính sách quyền riêng tư Tiki | 0,700682 | Rank 2 | Có | Lưu đến khi khách hàng yêu cầu/tự hủy và bảo mật trên máy chủ Tiki |
+
+**Bao nhiêu câu hỏi trả về chunk có liên quan trong top-3?** 5 / 5.
+
+**Phân bố thứ hạng của bằng chứng đúng:** 2 câu ở rank 1, 2 câu ở rank 2 và 1 câu ở rank 3.
 
 **Nhận xét cá nhân từ lần chạy thử:**
 
-Metadata filter ở câu 5 loại toàn bộ chunk dành cho người mua và giúp giới hạn đúng tài liệu người bán. Hai thất bại đầu cho thấy mock embedding không xếp hạng theo nghĩa; ngoài ra câu template/hướng dẫn còn nằm trong body và trở thành chunk nhiễu, nên khi chuẩn bị corpus thật cần loại phần chú thích template trước khi ingest.
+Local multilingual embedder xếp đúng bằng chứng ở top-1 cho câu hỏi thời hạn đổi trả và bảo mật thẻ. Các câu 2, 4 và 5 cho thấy “đúng tài liệu” chưa đồng nghĩa “đúng đoạn”: phần mở đầu cùng chủ đề có thể đứng cao hơn đoạn chứa câu trả lời cụ thể. Metadata filter ở câu 2 loại các tài liệu dành riêng cho người mua và bảo đảm toàn bộ ứng viên đến từ chính sách người bán, nhưng chunk bằng chứng vẫn chỉ đứng rank 3; có thể cải thiện bằng chunking theo đề mục/điều khoản.
 
 **Điều hay nhất học được từ thành viên/nhóm khác:** [Cần bổ sung sau buổi demo; chưa có dữ liệu để ghi trung thực.]
-
-**Việc bắt buộc hoàn tất trước khi nộp:**
-
-1. Nhóm bổ sung 5–10 tài liệu có nguồn thật và metadata bắt buộc.
-2. Chốt đúng 5 benchmark queries và gold answers trong `REPORT_NHOM.md`.
-3. Cài local embedder, đặt `EMBEDDING_PROVIDER=local`, chạy lại bảng trên cùng câu hỏi của nhóm.
-4. Thay kết quả tạm, ghi câu trả lời agent thực tế và bổ sung bài học từ buổi demo.
 
 ---
 
@@ -153,8 +168,8 @@ Metadata filter ở câu 5 loại toàn bộ chunk dành cho người mua và gi
 | Khởi động (Warm-up) | 5 / 5 |
 | Hướng tiếp cận của tôi (My Approach) | 10 / 10 |
 | Hoàn thiện code (Core Implementation — tests) | 30 / 30 |
-| Dự đoán độ tương tự (kết quả mock, chờ local) | 2 / 5 |
-| Kết quả truy xuất (kết quả tạm, chưa có benchmark nhóm) | 0 / 10 |
-| **Tổng phần cá nhân đã có bằng chứng** | **47 / 60** |
+| Dự đoán độ tương tự (local multilingual embeddings) | 5 / 5 |
+| Kết quả truy xuất cá nhân (5/5 relevant trong top-3) | 10 / 10 |
+| **Tổng phần cá nhân đã có bằng chứng** | **60 / 60** |
 
-> Sau khi nhóm cung cấp corpus và benchmark chính thức, hai phần cuối có thể được hoàn thiện và tự đánh giá lại; không nên tự chấm tối đa dựa trên dữ liệu template và mock embedder.
+> Điểm tự đánh giá trên phản ánh phần kỹ thuật cá nhân. Nội dung học hỏi/so sánh với thành viên khác được giữ ngoài phạm vi theo yêu cầu và chỉ có thể bổ sung sau hoạt động nhóm thực tế.
